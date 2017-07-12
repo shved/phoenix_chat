@@ -12,7 +12,7 @@ config :phoenix_chat,
 # Configures the endpoint
 config :phoenix_chat, PhoenixChat.Endpoint,
   url: [host: "localhost"],
-  secret_key_base: "phaqob9Rs1pFDiS/5WVx6Q7bMpzWQv9DRJ323TV6ITBthxo6UnFrX0X9AdldcJzE",
+  secret_key_base: "9DXaS3sjuEtnBRgmi/CHawdISyT9ePkSTcd/tQ8a/O3VB9K++RhQ5u3k5qfHOKKy",
   render_errors: [view: PhoenixChat.ErrorView, accepts: ~w(html json)],
   pubsub: [name: PhoenixChat.PubSub,
            adapter: Phoenix.PubSub.PG2]
@@ -21,6 +21,21 @@ config :phoenix_chat, PhoenixChat.Endpoint,
 config :logger, :console,
   format: "$time $metadata[$level] $message\n",
   metadata: [:request_id]
+
+config :ueberauth, Ueberauth,
+  providers: [
+    identity: {
+      Ueberauth.Strategy.Identity,
+      [callback_methods: ["POST"]]
+    }
+  ]
+
+config :guardian, Guardian,
+  issuer: "PhoenixChat",
+  ttl: {30, :days},
+  secret_key: "uw/27wdrIquPn2fktwfJg9tg8qOl5ysTPCFjISw1TCCaLlfWgRUAea1SuWcfERzX",
+  serializer: PhoenixChat.GuardianSerializer,
+  permissions: %{default: [:read, :write]}
 
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.

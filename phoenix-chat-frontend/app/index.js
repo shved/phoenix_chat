@@ -6,11 +6,10 @@ import { Router, Route, IndexRoute, hashHistory } from "react-router"
 
 import { default as Home } from "./components/Home"
 import { default as Settings } from "./components/Settings"
+import { default as App } from "./components/App"
 
 import { Provider } from "react-redux"
 import store from "./redux/store"
-
-const App = props => (<div>{props.children}</div>)
 
 ReactDOM.render(
   <Provider store={store}>

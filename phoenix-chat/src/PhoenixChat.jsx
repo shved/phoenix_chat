@@ -1,24 +1,87 @@
 import React from 'react'
 import style from './style.js'
+import { Socket } from "phoenix"
+import uuid from 'uuid'
 
 export class PhoenixChat extends React.Component {
   constructor(props) {
     super(props)
+    this.handleMessageSubmit = this.handleMessageSubmit.bind(this)
+    this.handleChange = this.handleChange.bind(this)
     this.state = {
-      isOpen: false
+      isOpen: false,
+      input: "",
+      messages: []
     }
     this.toggleChat = this.toggleChat.bind(this)
+    this.configureChannels = this.configureChannels.bind(this)
+  }
+
+  componentDidMount() {
+    if (!localStorage.phoenix_chat_uuid) {
+      localStorage.phoenix_chat_uuid = uuid.v4()
+    }
+
+    this.uuid = localStorage.phoenix_chat_uuid
+    const params = { uuid: this.uuid }
+    this.socket = new Socket("ws://localhost:4000/socket", { params })
+    this.socket.connect()
+
+    this.configureChannels(this.uuid)
+  }
+
+  configureChannels(room) {
+    this.channel = this.socket.channel(`room:${room}`)
+    this.channel.join()
+      .receive("ok", ({ messages }) => {
+        console.log(`Succesfully joined the ${room} chat room.`)
+        this.setState({
+          messages: messages || []
+        })
+      })
+      .receive("error", () => {
+        console.log(`Unable to join the ${room} chat room.`)
+      })
+    this.channel.on("message", payload => {
+      this.setState({
+        messages: this.state.messages.concat([payload])
+      })
+    })
   }
 
   toggleChat() {
     this.setState({ isOpen: !this.state.isOpen })
   }
 
+  handleMessageSubmit(e) {
+    if (e.keyCode === 13 && this.state.input !== "") {
+      this.channel.push('message', {
+        room: localStorage.phoenix_chat_uuid,
+        body: this.state.input,
+        timestamp: new Date().getTime()
+      })
+      this.setState({ input: "" })
+    }
+  }
+
+  handleChange(e) {
+    this.setState({ input: e.target.value })
+  }
+
+  componentWillUnmount() {
+    this.channel.leave()
+  }
+
   render() {
     return (
       <div>
         { this.state.isOpen
-          ? <PhoenixChatSidebar toggleChat={this.toggleChat} />
+          ? <PhoenixChatSidebar
+              handleChange={this.handleChange}
+              handleMessageSubmit={this.handleMessageSubmit}
+              input={this.state.input}
+              messages={this.state.messages}
+              toggleChat={this.toggleChat} />
           : <PhoenixChatButton toggleChat={this.toggleChat} /> }
       </div>
     )
@@ -43,13 +106,6 @@ export class PhoenixChatSidebar extends React.Component {
   constructor(props) {
     super(props)
     this.closeChat = this.closeChat.bind(this)
-    this.state = {
-      messages: [
-        {from: "Client", body: "Test"},
-        {from: "John", body: "Foo"},
-        {from: "Client", body: "Bar"}
-      ]
-    }
   }
 
   componentDidUpdate() {
@@ -63,14 +119,15 @@ export class PhoenixChatSidebar extends React.Component {
     this.props.toggleChat()
   }
 
-  render() {
-    const list = !this.state.messages ? null : this.state.messages.map(({ body, id, from }, i) => {
-      const right = from === "Client"
+render() {
+    const list = !this.props.messages ? null : this.props.messages.map(({ body, id, from }, i) => {
+      const right = from === localStorage.phoenix_chat_uuid
+
       return (
         <div
-          ref={ ref => { this[`chatMessage:${i}`] = ref }}
+          ref={ref => this[`chatMessage:${i}`] = ref}
           key={i}
-          style={{...style.messageWrapper, justifyContent: right ? "flex-end" : "flex-start"}}>
+          style={{ ...style.messageWrapper, justifyContent: right ? "flex-end" : "flex-start" }}>
           <div
             style={right ? style.chatRight : style.chatLeft}>
             { body }
@@ -78,6 +135,7 @@ export class PhoenixChatSidebar extends React.Component {
         </div>
       )
     })
+
     return (
       <div style={style.client}>
         <div style={style.header}>
@@ -101,11 +159,11 @@ export class PhoenixChatSidebar extends React.Component {
         </div>
         <div style={style.inputContainer}>
           <input
+            onKeyDown={this.props.handleMessageSubmit}
+            onChange={this.props.handleChange}
+            value={this.props.input}
             type="text"
             style={style.inputBox} />
-          <div>
-            100% free by <a href="https://learnphoenix.io">PhoenixChat</a>
-          </div>
         </div>
       </div>
     )

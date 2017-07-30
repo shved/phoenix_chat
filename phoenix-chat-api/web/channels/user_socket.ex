@@ -1,5 +1,6 @@
 defmodule PhoenixChat.UserSocket do
   use Phoenix.Socket
+  alias PhoenixChat.{Repo, User}
 
   ## Channels
   channel "room:*", PhoenixChat.RoomChannel
@@ -9,11 +10,20 @@ defmodule PhoenixChat.UserSocket do
   transport :websocket, Phoenix.Transports.WebSocket
 
   def connect(params, socket) do
-    socket = socket
-      |> assign(:user_id, params["id"])
-      |> assign(:username, params["username"])
-      |> assign(:email, params["email"])
-      |> assign(:uuid, params["uuid"])
+    user_id = params["id"]
+    user = user_id && Repo.get(User, user_id)
+
+    socket = if user do
+      socket
+        |> assign(:user_id, user_id)
+        |> assign(:username, user.username)
+        |> assign(:email, user.email)
+      else
+        socket
+          |> assign(:user_id, nil)
+          |> assign(:uuid, params["uuid"])
+      end
+
     {:ok, socket}
   end
 

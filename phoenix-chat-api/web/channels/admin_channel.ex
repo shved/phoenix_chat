@@ -13,7 +13,7 @@ defmodule PhoenixChat.AdminChannel do
   """
   def join("admin:active_users", payload, socket) do
     authorize(payload, fn ->
-      send(self, :after_join)
+      send(self(), :after_join)
       {:ok, socket}
     end)
   end

@@ -19,7 +19,8 @@ defmodule PhoenixChat.Mixfile do
   def application do
     [mod: {PhoenixChat, []},
      applications: [:phoenix, :phoenix_pubsub, :phoenix_html, :cowboy, :logger, :gettext,
-                    :phoenix_ecto, :postgrex, :comeonin, :ueberauth, :ueberauth_identity]]
+                    :faker, :phoenix_ecto, :postgrex, :comeonin, :ueberauth,
+                    :ueberauth_identity]]
   end
 
   # Specifies which paths to compile per environment.

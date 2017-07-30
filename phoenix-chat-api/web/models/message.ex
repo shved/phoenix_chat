@@ -1,14 +1,17 @@
 defmodule PhoenixChat.Message do
   use PhoenixChat.Web, :model
 
+  alias PhoenixChat.{DateTime, User, AnonymousUser}
+
   schema "messages" do
     field :body, :string
-    field :timestamp, PhoenixChat.DateTime
+    field :timestamp, DateTime
     field :room, :string
-    field :from, :string
-    belongs_to :user, PhoenixChat.User
 
-    timestamps
+    belongs_to :user, User
+    belongs_to :anonymous_user, AnonymousUser, type: :binary_id
+
+    timestamps()
   end
 
   @doc """

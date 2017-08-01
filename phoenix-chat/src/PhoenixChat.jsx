@@ -1,5 +1,6 @@
 import React from 'react'
 import style from './style.js'
+
 import { Socket } from "phoenix"
 import uuid from 'uuid'
 
@@ -32,7 +33,8 @@ export class PhoenixChat extends React.Component {
 
   configureChannels(room) {
     this.channel = this.socket.channel(`room:${room}`)
-    this.channel.join()
+    this.channel.
+    )
       .receive("ok", ({ messages }) => {
         console.log(`Succesfully joined the ${room} chat room.`)
         this.setState({
@@ -47,6 +49,13 @@ export class PhoenixChat extends React.Component {
         messages: this.state.messages.concat([payload])
       })
     })
+
+    this.adminChannel = this.socket.channel(`admin:active_users`)
+    this.adminChannel.join()
+      .receive("ok", () => {
+        console.log(`Succesfully joined the active_users topic.`)
+      })
+    }
   }
 
   toggleChat() {
@@ -70,6 +79,7 @@ export class PhoenixChat extends React.Component {
 
   componentWillUnmount() {
     this.channel.leave()
+    this.adminChannel.leave()
   }
 
   render() {
@@ -119,9 +129,11 @@ export class PhoenixChatSidebar extends React.Component {
     this.props.toggleChat()
   }
 
-render() {
-    const list = !this.props.messages ? null : this.props.messages.map(({ body, id, from }, i) => {
-      const right = from === localStorage.phoenix_chat_uuid
+  render() {
+    const list = !this.props.messages
+      ? null
+      : this.props.messages.map(({ body, id, anonymous_user_id }, i) => {
+      const right = anonymous_user_id === localStorage.phoenix_chat_uuid
 
       return (
         <div
